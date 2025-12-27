@@ -1,4 +1,4 @@
-import 'package:contacts_app/UI/contacts_list/main_screen.dart';
+import 'package:DialBook/UI/contacts_list/main_screen.dart';
 import 'package:flutter/material.dart';
 
 void main() {

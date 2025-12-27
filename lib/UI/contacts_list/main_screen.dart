@@ -1,6 +1,6 @@
-import 'package:contacts_app/UI/contacts_list/contacts_list_page.dart';
-import 'package:contacts_app/UI/contacts_list/favorite_page.dart';
-import 'package:contacts_app/UI/contacts_list/keypad_page.dart';
+import 'package:DialBook/UI/contacts_list/contacts_list_page.dart';
+import 'package:DialBook/UI/contacts_list/favorite_page.dart';
+import 'package:DialBook/UI/contacts_list/keypad_page.dart';
 import 'package:flutter/material.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 

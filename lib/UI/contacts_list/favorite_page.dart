@@ -1,5 +1,7 @@
-import 'package:contacts_app/UI/contacts_list/widget/contact_manager.dart';
-import 'package:contacts_app/data/contact.dart';
+// favorite_page.dart
+import 'package:DialBook/UI/contacts_list/contact_details_page.dart';
+import 'package:DialBook/UI/contacts_list/widget/contact_manager.dart';
+import 'package:DialBook/UI/contacts_list/widget/contact_tile.dart';
 import 'package:flutter/material.dart';
 
 class FavoritesPage extends StatefulWidget {
@@ -10,82 +12,89 @@ class FavoritesPage extends StatefulWidget {
 }
 
 class _FavoritesPageState extends State<FavoritesPage> {
-  List<Contact> get _favoriteContacts {
-    return ContactManager().contacts.where((c) => c.isFavorite).toList();
-  }
-
   @override
   Widget build(BuildContext context) {
-    final favorites = _favoriteContacts;
+    final favoriteContacts = ContactManager().getFavorites();
 
     return Scaffold(
       appBar: AppBar(
-        title: Center(child: const Text('Favorites',style: TextStyle(color: Colors.white,fontSize: 30,fontWeight: FontWeight.bold),)),
+        title: const Center(
+          child: Text(
+            'Favorites',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 30,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
+        elevation: 0,
       ),
-      body: favorites.isEmpty
+      body: favoriteContacts.isEmpty
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.star_border, size: 80, color: Colors.grey[400]),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No favorite contacts',
-                    style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+                  Icon(
+                    Icons.star_border,
+                    size: 100,
+                    color: Colors.grey[300],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 24),
                   Text(
-                    'Tap the star icon to add favorites',
-                    style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+                    'No Favorite Contacts',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Add contacts to favorites by tapping\nthe star icon',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[500],
+                    ),
                   ),
                 ],
               ),
             )
-          : ListView.builder(
-              itemCount: favorites.length,
-              itemBuilder: (context, index) {
-                final contact = favorites[index];
-                return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  elevation: 2,
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: Colors.blue,
-                      child: Text(
-                        contact.name[0].toUpperCase(),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    title: Text(
-                      contact.name,
-                      style: const TextStyle(fontWeight: FontWeight.w500),
-                    ),
-                    subtitle: Text(contact.phoneNumber),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.phone, color: Colors.blue),
-                          onPressed: () {},
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.star, color: Colors.amber),
-                          onPressed: () {
-                            setState(() {
-                              contact.isFavorite = false;
-                            });
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                );
+          : RefreshIndicator(
+              onRefresh: () async {
+                setState(() {});
               },
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                itemCount: favoriteContacts.length,
+                itemBuilder: (context, index) {
+                  final contact = favoriteContacts[index];
+                  final actualIndex = ContactManager().contacts.indexOf(contact);
+
+                  return ContactTile(
+                    contact: contact,
+                    onFavoriteToggle: () async {
+                      await ContactManager().toggleFavorite(actualIndex);
+                      setState(() {});
+                    },
+                    onTap: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ContactDetailsPage(
+                            contact: contact,
+                            contactIndex: actualIndex,
+                          ),
+                        ),
+                      );
+                      setState(() {});
+                    },
+                  );
+                },
+              ),
             ),
     );
   }

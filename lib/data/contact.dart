@@ -1,8 +1,8 @@
+// contact.dart
 class Contact {
-
-  late String name;
-  late String email;
-  late String phoneNumber;
+  String name;
+  String email;
+  String phoneNumber;
   bool isFavorite;
 
   Contact({
@@ -11,5 +11,24 @@ class Contact {
     required this.phoneNumber,
     this.isFavorite = false,
   });
-  
+
+  // Convert Contact to JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'email': email,
+      'phoneNumber': phoneNumber,
+      'isFavorite': isFavorite,
+    };
+  }
+
+  // Create Contact from JSON
+  factory Contact.fromJson(Map<String, dynamic> json) {
+    return Contact(
+      name: json['name'] ?? '',
+      email: json['email'] ?? '',
+      phoneNumber: json['phoneNumber'] ?? '',
+      isFavorite: json['isFavorite'] ?? false,
+    );
+  }
 }

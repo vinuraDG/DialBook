@@ -1,7 +1,8 @@
-import 'package:contacts_app/UI/contacts_list/widget/contact_manager.dart';
-import 'package:contacts_app/UI/contacts_list/widget/contact_tile.dart';
-import 'package:contacts_app/data/contact.dart';
-import 'package:faker/faker.dart';
+// contacts_list_page.dart - Fully Corrected Version
+import 'package:DialBook/UI/contacts_list/contact_details_page.dart';
+import 'package:DialBook/UI/contacts_list/widget/contact_manager.dart';
+import 'package:DialBook/UI/contacts_list/widget/contact_tile.dart';
+import 'package:DialBook/data/contact.dart';
 import 'package:flutter/material.dart';
 
 class ContactsListPage extends StatefulWidget {
@@ -14,17 +15,22 @@ class ContactsListPage extends StatefulWidget {
 class _ContactsListPageState extends State<ContactsListPage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    if (ContactManager().contacts.isEmpty) {
-      ContactManager().contacts = List.generate(50, (index) {
-        return Contact(
-          name: '${faker.person.firstName()} ${faker.person.lastName()}',
-          email: faker.internet.freeEmail(),
-          phoneNumber: '+1 ${faker.randomGenerator.integer(999, min: 100)}-${faker.randomGenerator.integer(999, min: 100)}-${faker.randomGenerator.integer(9999, min: 1000)}',
-        );
+    _loadContacts();
+  }
+
+  Future<void> _loadContacts() async {
+    await ContactManager().loadContacts();
+    
+    
+    
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
       });
     }
   }
@@ -41,171 +47,257 @@ class _ContactsListPageState extends State<ContactsListPage> {
   }
 
   void _addNewContact() {
-  final nameController = TextEditingController();
-  final emailController = TextEditingController();
-  final phoneController = TextEditingController();
-  final formKey = GlobalKey<FormState>();
+    final nameController = TextEditingController();
+    final emailController = TextEditingController();
+    final phoneController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    bool isDialogActive = true;
 
-  showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
-      title: Row(
-        children: const [
-          Icon(Icons.person_add, color: Colors.blue, size: 28),
-          SizedBox(width: 12),
-          Text(
-            'Add New Contact',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-            ),
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogContext) => WillPopScope(
+        onWillPop: () async {
+          isDialogActive = false;
+          return true;
+        },
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
           ),
-        ],
-      ),
-      content: SingleChildScrollView(
-        child: Form(
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 8),
-              // Name Field
-              TextFormField(
-                controller: nameController,
-                decoration: InputDecoration(
-                  labelText: 'Full Name',
-                  hintText: 'Enter contact name',
-                  prefixIcon: const Icon(Icons.person, color: Colors.blue),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  filled: true,
-                  fillColor: Colors.grey[50],
+          title: Row(
+            children: const [
+              Icon(Icons.person_add, color: Colors.blue, size: 28),
+              SizedBox(width: 12),
+              Text(
+                'Add New Contact',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
                 ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter a name';
-                  }
-                  return null;
-                },
-                textCapitalization: TextCapitalization.words,
               ),
-              const SizedBox(height: 20),
-              // Phone Field
-              TextFormField(
-                controller: phoneController,
-                decoration: InputDecoration(
-                  labelText: 'Phone Number',
-                  hintText: 'Enter phone number',
-                  prefixIcon: const Icon(Icons.phone, color: Colors.green),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  filled: true,
-                  fillColor: Colors.grey[50],
-                ),
-                keyboardType: TextInputType.phone,
-                validator: (value) {
-                  if (value != null && value.isNotEmpty) {
-                    // Basic phone validation
-                    if (value.length < 10) {
-                      return 'Please enter a valid phone number';
-                    }
-                  }
-                  return null;
-                },
-              ),
-             
-            
-              const SizedBox(height: 8),
             ],
           ),
-        ),
-      ),
-      actions: [
-        // Cancel Button
-        TextButton(
-          onPressed: () {
-            nameController.dispose();
-            phoneController.dispose();
-            Navigator.pop(context);
-          },
-          style: TextButton.styleFrom(
-            foregroundColor: Colors.grey[700],
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          ),
-          child: const Text(
-            'Cancel',
-            style: TextStyle(fontSize: 16),
-          ),
-        ),
-        // Add Button
-        ElevatedButton(
-          onPressed: () {
-            if (formKey.currentState!.validate()) {
-              setState(() {
-                ContactManager().contacts.add(Contact(
-                  name: nameController.text.trim(),
-                  email: emailController.text.trim(),
-                  phoneNumber: phoneController.text.trim(),
-                ));
-              });
-              nameController.dispose();
-              emailController.dispose();
-              phoneController.dispose();
-              Navigator.pop(context);
-              
-              // Show success message
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Row(
-                    children: const [
-                      Icon(Icons.check_circle, color: Colors.white),
-                      SizedBox(width: 12),
-                      Text('Contact added successfully!'),
-                    ],
+          content: SingleChildScrollView(
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: nameController,
+                    textInputAction: TextInputAction.next,
+                    decoration: InputDecoration(
+                      labelText: 'Full Name',
+                      hintText: 'Enter contact name',
+                      prefixIcon: const Icon(Icons.person, color: Colors.blue),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[50],
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please enter a name';
+                      }
+                      return null;
+                    },
+                    textCapitalization: TextCapitalization.words,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                   ),
-                  backgroundColor: Colors.green,
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                  const SizedBox(height: 20),
+                  TextFormField(
+                    controller: phoneController,
+                    textInputAction: TextInputAction.next,
+                    decoration: InputDecoration(
+                      labelText: 'Phone Number',
+                      hintText: 'Enter phone number',
+                      prefixIcon: const Icon(Icons.phone, color: Colors.green),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[50],
+                    ),
+                    keyboardType: TextInputType.phone,
+                    validator: (value) {
+                      if (value != null && value.isNotEmpty) {
+                        if (value.length < 10) {
+                          return 'Please enter a valid phone number';
+                        }
+                      }
+                      return null;
+                    },
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                   ),
-                ),
-              );
-            }
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.blue,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+                  const SizedBox(height: 20),
+                  TextFormField(
+                    controller: emailController,
+                    textInputAction: TextInputAction.done,
+                    decoration: InputDecoration(
+                      labelText: 'Email Address',
+                      hintText: 'Enter email address',
+                      prefixIcon: const Icon(Icons.email, color: Colors.orange),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[50],
+                    ),
+                    keyboardType: TextInputType.emailAddress,
+                    validator: (value) {
+                      if (value != null && value.isNotEmpty) {
+                        if (!value.contains('@') || !value.contains('.')) {
+                          return 'Please enter a valid email';
+                        }
+                      }
+                      return null;
+                    },
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
+                    onFieldSubmitted: (_) {
+                      if (isDialogActive && formKey.currentState!.validate()) {
+                        _saveContact(
+                          dialogContext,
+                          nameController,
+                          emailController,
+                          phoneController,
+                        );
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                ],
+              ),
             ),
           ),
-          child: const Text(
-            'Add Contact',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          actions: [
+            TextButton(
+              onPressed: () {
+                isDialogActive = false;
+                FocusScope.of(dialogContext).unfocus();
+                Future.delayed(const Duration(milliseconds: 100), () {
+                  if (Navigator.canPop(dialogContext)) {
+                    Navigator.pop(dialogContext);
+                  }
+                });
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.grey[700],
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(fontSize: 16),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (isDialogActive && formKey.currentState!.validate()) {
+                  _saveContact(
+                    dialogContext,
+                    nameController,
+                    emailController,
+                    phoneController,
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text(
+                'Add Contact',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ).whenComplete(() {
+      isDialogActive = false;
+      Future.delayed(const Duration(milliseconds: 200), () {
+        nameController.dispose();
+        emailController.dispose();
+        phoneController.dispose();
+      });
+    });
+  }
+
+  void _saveContact(
+    BuildContext dialogContext,
+    TextEditingController nameController,
+    TextEditingController emailController,
+    TextEditingController phoneController,
+  ) async {
+    FocusScope.of(dialogContext).unfocus();
+    await Future.delayed(const Duration(milliseconds: 150));
+
+    if (!mounted) return;
+
+    final newContact = Contact(
+      name: nameController.text.trim(),
+      email: emailController.text.trim(),
+      phoneNumber: phoneController.text.trim(),
+    );
+
+    await ContactManager().addContact(newContact);
+
+    if (Navigator.canPop(dialogContext)) {
+      Navigator.pop(dialogContext);
+    }
+
+    if (mounted) {
+      setState(() {});
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: const [
+              Icon(Icons.check_circle, color: Colors.white),
+              SizedBox(width: 12),
+              Text('Contact added successfully!'),
+            ],
+          ),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
           ),
         ),
-      ],
-    ),
-  ).then((_) {
-    // Dispose controllers if dialog is dismissed
-    nameController.dispose();
-    phoneController.dispose();
-  });
-}
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     final filteredContacts = _filteredContacts;
 
     return Scaffold(
       appBar: AppBar(
-        title: Center(child: const Text('Contacts',style: TextStyle(color: Colors.white,fontSize: 30,fontWeight: FontWeight.bold),)),
+        title: const Center(
+          child: Text(
+            'Contacts',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 30,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -262,22 +354,42 @@ class _ContactsListPageState extends State<ContactsListPage> {
                       ],
                     ),
                   )
-                : ListView.builder(
-                    itemCount: filteredContacts.length,
-                    itemBuilder: (context, index) {
-                      return ContactTile(
-                        contact: filteredContacts[index],
-                        onFavoriteToggle: () {
-                          setState(() {
-                            filteredContacts[index].isFavorite =
-                                !filteredContacts[index].isFavorite;
-                          });
-                        },
-                        onTap: () {
-                          _showContactDetails(filteredContacts[index]);
-                        },
-                      );
+                : RefreshIndicator(
+                    onRefresh: () async {
+                      await _loadContacts();
                     },
+                    child: ListView.builder(
+                      itemCount: filteredContacts.length,
+                      itemBuilder: (context, index) {
+                        final actualIndex = ContactManager()
+                            .contacts
+                            .indexOf(filteredContacts[index]);
+                        
+                        return ContactTile(
+                          contact: filteredContacts[index],
+                          onFavoriteToggle: () async {
+                            await ContactManager().toggleFavorite(actualIndex);
+                            if (mounted) {
+                              setState(() {});
+                            }
+                          },
+                          onTap: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ContactDetailsPage(
+                                  contact: filteredContacts[index],
+                                  contactIndex: actualIndex,
+                                ),
+                              ),
+                            );
+                            if (mounted) {
+                              setState(() {});
+                            }
+                          },
+                        );
+                      },
+                    ),
                   ),
           ),
         ],
@@ -290,94 +402,9 @@ class _ContactsListPageState extends State<ContactsListPage> {
     );
   }
 
-  void _showContactDetails(Contact contact) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        maxChildSize: 0.9,
-        minChildSize: 0.4,
-        expand: false,
-        builder: (context, scrollController) => SingleChildScrollView(
-          controller: scrollController,
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                CircleAvatar(
-                  radius: 50,
-                  backgroundColor: Colors.blue,
-                  child: Text(
-                    contact.name[0].toUpperCase(),
-                    style: const TextStyle(fontSize: 36, color: Colors.white),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  contact.name,
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 32),
-                ListTile(
-                  leading: const Icon(Icons.phone, color: Colors.blue),
-                  title: const Text('Phone'),
-                  subtitle: Text(contact.phoneNumber),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.phone),
-                    onPressed: () {},
-                  ),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.email, color: Colors.blue),
-                  title: const Text('Email'),
-                  subtitle: Text(contact.email),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.email),
-                    onPressed: () {},
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    ElevatedButton.icon(
-                      onPressed: () {},
-                      icon: const Icon(Icons.message),
-                      label: const Text('Message'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        foregroundColor: Colors.white,
-                      ),
-                    ),
-                    ElevatedButton.icon(
-                      onPressed: () {},
-                      icon: const Icon(Icons.videocam),
-                      label: const Text('Video'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        foregroundColor: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 }

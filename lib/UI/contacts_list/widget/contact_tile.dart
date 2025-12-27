@@ -1,4 +1,4 @@
-import 'package:contacts_app/data/contact.dart';
+import 'package:DialBook/data/contact.dart';
 import 'package:flutter/material.dart';
 
 class ContactTile extends StatelessWidget {
